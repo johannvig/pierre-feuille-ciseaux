@@ -4,8 +4,13 @@ import pyttsx3
 from multiprocessing import Process
 from time import sleep
 import random
-import sys
+import time
+import json
 
+
+
+
+win, partie, lose, nul = 0, 0, 0, 0
 
 
 def loop_a():
@@ -20,7 +25,7 @@ def loop_a():
 
         # Use female voice
         voices = engine.getProperty('voices')
-        engine.setProperty('voice', voices[1].id)
+        engine.setProperty('voice', voices[0].id)
 
         # Sets speed percent
         # Can be more than 100
@@ -33,11 +38,16 @@ def loop_a():
         engine.stop()
         i = i + 1
 
-    print(choix_utilisateur)
-    Process(target=loop_c).start()
+
 
 
 def loop_b():
+
+    global win
+    global lose
+    global nul
+    global partie
+
     cap = cv.VideoCapture(0)
 
     detector = HandDetector(detectionCon=0.8, maxHands=2)
@@ -61,13 +71,15 @@ def loop_b():
 
     # say method on the engine that passing input text to be spoken
     engine.say(
-        "Please show your hand and choose ciseau, papier or feuille. Vous avez 5 secondes pour faire votre choix")
+        "Montrer votre main et choississez entre ciseaux, papier et feuille. Vous avez 5 secondes pour faire votre choix")
 
     # run and wait method, it processes the voice commands
     engine.runAndWait()
     engine.stop()
 
-    while True:
+    fin=time.time() + 17
+
+    while time.time()<fin:
 
         ret, img = cap.read()
         hands, img = detector.findHands(img)
@@ -99,19 +111,9 @@ def loop_b():
             break
 
 
-
     cap.release()
     cv.destroyAllWindows()
 
-
-def loop_c():
-    global choix_utilisateur
-    global win
-    global lose
-    global nul
-    global partie
-
-    # Initialize the engine
     engine = pyttsx3.init()
 
     # Set properties before adding
@@ -133,35 +135,37 @@ def loop_c():
     choix_ordinateur = ["pierre", "feuille", "ciseaux"]
     choix_ordinateur2 = random.choice(choix_ordinateur)
 
+    engine.say("L'ordinateur a choisis" + str(choix_ordinateur2))
+
     if choix_utilisateur == "feuille" and choix_ordinateur2 == "pierre":
-        print("feuille vs pierre")
-        engine.say("You win")
+        print("utilisateur:feuille vs ordinateur: pierre")
+        engine.say("Tu as gagné")
         win = +1
     elif choix_utilisateur == "ciseaux" and choix_ordinateur2 == "feuille":
-        print("ciseaux vs feuille")
-        engine.say("You win")
+        print("utilisateur:ciseaux vs ordinateur: feuille")
+        engine.say("Tu as gagné")
         win = +1
     elif choix_utilisateur == "pierre" and choix_ordinateur2 == "ciseaux":
-        print("pierre vs ciseaux")
-        engine.say("You win")
+        print("utilisateur:pierre vs ordinateur: ciseaux")
+        engine.say("Tu as gagné")
         win = +1
 
 
     elif choix_utilisateur == "feuille" and choix_ordinateur2 == "ciseaux":
-        print("pierre vs feuille")
-        engine.say("You lose")
+        print("utilisateur: feuille vs ordinateur: ciseaux")
+        engine.say("Tu as perdu")
         lose = +1
     elif choix_utilisateur == "ciseaux" and choix_ordinateur2 == "pierre":
-        print("feuille vs ciseaux")
-        engine.say("You lose")
+        print("utilisateur: feuille vs ordinateur: ciseaux")
+        engine.say("Tu as perdu")
         lose = +1
-    elif choix_utilisateur == "feuille" and choix_ordinateur2 == "ciseaux":
-        print("ciseaux vs pierre")
-        engine.say("You lose")
+    elif choix_utilisateur == "pierre" and choix_ordinateur2 == "feuille":
+        print("utilisateur: pierre vs ordinateur: feuille")
+        engine.say("Tu as perdu")
         lose = +1
     else:
         print(str(choix_utilisateur) + " vs " + str(choix_ordinateur2))
-        engine.say("Nul")
+        engine.say("Partie nulle")
         nul = +1
 
     partie = +1
@@ -170,28 +174,73 @@ def loop_c():
     engine.runAndWait()
     engine.stop()
 
-    print(str(nom_utilisateur))
-    print("nombre de parties:" + str(partie))
-    print("nombre de win:" + str(win))
-    print("nombre de lose:" + str(lose))
-    print("nombre de nul:" + str(nul))
+    fileObject = open("pierre-feuille-ciseaux.json", "r")
+    jsonContent = fileObject.read()
+    List = json.loads(jsonContent)
 
-    continuer = str(input("Voulez-vous continuer à jouer? oui/non"))
+    partie2,win2,lose2,nul2= List['partie'],List['win'],List['lose'],List['nul']
 
-    if continuer == "oui":
-        Process(target=loop_a).start()
-    else:
-        sys.exit()
+    total_partie=partie+int(partie2)
+    total_win = win+int(win2)
+    total_lose = lose+int(lose2)
+    total_nul = nul+int(nul2)
+
+
+    print(f"nombre de partie:{total_partie}")
+    print(f"nombre de win:{total_win}")
+    print(f"nombre de lose:{total_lose}")
+    print(f"nombre de nul:{total_nul}")
+
+    score_actualiser = {
+        "partie": int(total_partie),
+        "win": int(total_win),
+        "lose": int(total_lose),
+        "nul": int(total_nul)
+    }
+
+    with open('pierre-feuille-ciseaux.json', 'w') as mon_fichier:
+        json.dump(score_actualiser, mon_fichier)
+
+
+
 
 
 if __name__ == '__main__':
-    nom_utilisateur = input("Entrer votre nom:")
-    win = 0
-    lose = 0
-    nul = 0
-    partie = 0
 
-    loop_a = Process(target=loop_a)
-    loop_b = Process(target=loop_b)
-    loop_a.start()
-    loop_b.start()
+
+
+    initialisation = {
+        "partie": 0,
+        "win": 0,
+        "lose": 0,
+        "nul": 0
+    }
+
+    with open('pierre-feuille-ciseaux.json', 'w') as mon_fichier:
+        json.dump(initialisation, mon_fichier)
+
+
+    continuer=int(input("Combien de parties voulez-vous faire?"))
+    i=0
+    while int(i)<int(continuer):
+        loop1 = Process(target=loop_a)
+        loop2 = Process(target=loop_b)
+        loop1.start()
+        loop2.start()
+        loop1.join()
+        loop2.join()
+
+        i=i+1
+
+
+
+    fileObject = open("pierre-feuille-ciseaux.json", "r")
+    jsonContent = fileObject.read()
+    List = json.loads(jsonContent)
+
+    print("score total")
+    print(f"nombre de partie:{List['partie']}")
+    print(f"nombre de win:{List['win']}")
+    print(f"nombre de lose:{List['lose']}")
+    print(f"nombre de nul:{List['nul']}")
+
