@@ -15,3 +15,8 @@ Ce projet est une implémentation interactive du jeu classique Pierre-Feuille-Ci
 - cvzone
 - pyttsx3
 - Multiprocessing
+
+
+![image](https://github.com/johannvig/pierre-feuille-ciseaux/assets/102874093/5c1b5b3b-9951-48b4-8dce-d5d0d5e88715)
+
+![image](https://github.com/johannvig/pierre-feuille-ciseaux/assets/102874093/b1bd7134-904f-43e7-b162-75638a824ccd)
